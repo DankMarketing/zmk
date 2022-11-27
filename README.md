@@ -5,6 +5,17 @@
 This is an experimental fork - it is not guaranteed to be functional. The original source of the ZMK project is
 [here](https://www.github.com/zmkfirmware/zmk).
 
+The present fork was created on 2022-11-26 from the `main` branch at https://github.com/zmkfirmware/zmk with the mouse
+functions branch `mouse-ftc` of https://github.com/ftc/zmk and the Pimoroni PM447 track ball branch `mouse-pim447` of
+https://github.com/cdc-mkb/zmk merged in.
+
+The shield `twobytwo3` is a proof of principle with the following features:
+
+* split wireless keyboard with Nice!Nano controller on each half
+* 2x2 keyboard matrix on each half: rows on pins 15,14; columns on pins 16,10; diodes from row to column
+* right half has got a Pimoroni PM447 Track Ball with SDA on pin 2, SCL on pin 3, INT not connected (all pin numbers
+  above use the Pro Micro numbering)
+
 The following is the original README
 
 ## Zephyr™ Mechanical Keyboard (ZMK) Firmware
