@@ -16,7 +16,7 @@
 #include <dt-bindings/zmk/hid_usage_pages.h>
 
 #define ZMK_HID_KEYBOARD_NKRO_MAX_USAGE HID_USAGE_KEY_KEYPAD_EQUAL
-   
+
 #define COLLECTION_REPORT 0x03
 
 static const uint8_t zmk_hid_report_desc[] = {
@@ -242,6 +242,16 @@ bool zmk_hid_consumer_is_pressed(zmk_key_t key);
 int zmk_hid_press(uint32_t usage);
 int zmk_hid_release(uint32_t usage);
 bool zmk_hid_is_pressed(uint32_t usage);
+
+int zmk_hid_mouse_button_press(zmk_mouse_button_t button);
+int zmk_hid_mouse_button_release(zmk_mouse_button_t button);
+int zmk_hid_mouse_buttons_press(zmk_mouse_button_flags_t buttons);
+int zmk_hid_mouse_buttons_release(zmk_mouse_button_flags_t buttons);
+void zmk_hid_mouse_movement_set(int16_t x, int16_t y);
+void zmk_hid_mouse_scroll_set(int8_t x, int8_t y);
+void zmk_hid_mouse_movement_update(int16_t x, int16_t y);
+void zmk_hid_mouse_scroll_update(int8_t x, int8_t y);
+void zmk_hid_mouse_clear();
 
 int zmk_hid_mouse_button_press(zmk_mouse_button_t button);
 int zmk_hid_mouse_button_release(zmk_mouse_button_t button);
