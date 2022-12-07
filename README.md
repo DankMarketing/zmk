@@ -17,8 +17,11 @@ The shield `twobytwo3` is a proof of principle with the following features:
   above use the Pro Micro numbering)
 
 I have extended the Pimoroni PIM 447 track ball driver and implemented inertia, acceleration depending on the immediate
-past and made these parameters configurable from the device tree. The shield ` twobytwo3` contains a sample
+past and made these parameters configurable from the device tree. The shield `twobytwo3` contains a sample
 configuration.
+
+The track ball option `power-layer` can now be set in order to make the track ball driver and 3V3 power output of the
+Nice!Nano depend on activation of a given layer.
 
 The following is the original README
 
