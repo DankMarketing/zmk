@@ -21,7 +21,8 @@ past and made these parameters configurable from the device tree. The shield `tw
 configuration.
 
 The track ball option `power-layer` can now be set in order to make the track ball driver and 3V3 power output of the
-Nice!Nano depend on activation of a given layer.
+Nice!Nano depend on activation of a given layer. Also, `idle-timeout` activates a timer that resets the keyboard to the
+default layer after a given idle period in seconds.
 
 The following is the original README
 
