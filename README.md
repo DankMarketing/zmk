@@ -1,7 +1,7 @@
 # Yackboard ([Y]et [A]nother [C]ustom [K]ey Board)
 
 This is an experimental fork of the [ZMK Project](https://www.github.com/zmkfirmware/zmk) tailored to the
-[Yackboard](http://gitlab.com/voityourwarranty/yackboard). You will get the keys with my layout work easily and with
+[Yackboard](http://gitlab.com/voidyourwarranty/yackboard). You will get the keys with my layout work easily and with
 some knowledge of ZMK also manage to change the keymap, but mouse devices still require programming.
 
 The present fork was created on 2022-11-26 from the `main` branch at https://github.com/zmkfirmware/zmk with the mouse
