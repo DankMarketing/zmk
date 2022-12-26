@@ -22,6 +22,7 @@ The shield `yackboard` drives the keys of the actual Yackboard:
 - right half has got a Pimoroni PM447 Track Ball with SDA on pin 2, SCL on pin 3, INT not connected (all pin numbers
   above use the Pro Micro numbering which agrees with the numbers on the silkscreen of the PCB next to the extra 10 pin
   header)
+- the key layout is described in detail in the Yackboard documentation
 
 ## Improved Driver
 
