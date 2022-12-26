@@ -1,0 +1,16 @@
+#
+# Configuration that defines the shield.
+#
+
+config SHIELD_YACKBOARD
+  def_bool $(shields_list_contains,yackboard)
+
+config SHIELD_YACKBOARD_LEFT
+  def_bool $(shields_list_contains,yackboard_left)
+
+config SHIELD_YACKBOARD_RIGHT
+  def_bool $(shields_list_contains,yackboard_right)
+
+#
+# End of file.
+#

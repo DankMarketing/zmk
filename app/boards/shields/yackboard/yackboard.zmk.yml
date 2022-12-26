@@ -1,0 +1,11 @@
+file_format: "1"
+id: yackboard
+name: Yackboard
+type: shield
+url: https://github.com/nonexist/yackboard
+requires: [pro_micro]
+features:
+  - keys
+siblings:
+  - yackboard_left
+  - yackboard_right
