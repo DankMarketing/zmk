@@ -5,6 +5,7 @@
 #define L_NAV  2 // navigation layer
 #define L_FUN  3 // function key layer
 #define L_BLE  4 // secret layer for bluetooth configuration
+#define L_SHF  5 // special layer that modifies only the shift key
 
 / {
   chosen {
