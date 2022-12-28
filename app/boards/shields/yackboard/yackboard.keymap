@@ -6,12 +6,12 @@
 
 // The dedicated shift key has got the following behaviour:
 // - if held down, it is the shift modifier
-// - if held down, but no other key is tapped, it reverts to the default layer (not yet implemented - so far, this happens when pressed with Ctrl)
+// - if held down, but no other key is tapped, it reverts to the default layer (note that this requires the custom retro-tap patch of https://github.com/nickconway/zmk/tree/retro-tap-binding)
 // - if tapped once, it is a one-shot shift, i.e. applies shift only to the next key
 // - if tapped twice, it is my flavour of caps word, i.e. it capitalizes the subsequent word (including the underscore)
 //
 // This is implemented as follows:
-// - first, there is a hold-tap with hold the LSHFT and tap the following sticky key
+// - first, there is a hold-tap with hold the LSHFT and tap the following sticky key with the custom retro-tap patch mapping an aborted hold to the layer reset
 // - the sticky key produces a one-shot version of a macro that applies the following two modifiers
 // - the shift modifier (for the one-shot shift) and the momentarily applied special layer L_SHF (which does nothing other than modifying the behaviour of the shift key)
 // - on the special layer L_SHF the shift key is my flavour of caps-word - otherwise that layer is transparent
@@ -47,6 +47,8 @@
       #binding-cells = <2>;
       flavor = "balanced";
       retro-tap;
+      retro-tap-behavior = "TO_LAYER"; // this requiree the custom retro-tap patch; note that the alternative behaviour is defined using control strings such as this
+      retro-tap-param1 = <L_DEF>;
       tapping-term-ms = <200>;
       bindings = <&kp>, <&sls>;
     };
@@ -63,14 +65,6 @@
       bindings = <&kp RA(S)>, <&kp N1>;
       mods = <(MOD_LSFT|MOD_RSFT)>;
       keep-mods = <(MOD_LSFT|MOD_RSFT)>;
-    };
-    shla: shift_layer { // the [Shift] key with [Ctrl] resets the layer; once holding shift can do that, this will be unneccessany
-      compatible = "zmk,behavior-mod-morph";
-      label = "SHIFT_LAYER";
-      #binding-cells = <0>;
-      bindings = <&sht LSHFT X>, <&to L_DEF>;
-      mods = <(MOD_LCTL|MOD_RCTL)>;
-      keep-mods = <(MOD_LCTL|MOD_RCTL)>;
     };
     shnu: shift_numbers { // the [L-1] number layer key with [Shift] switches to the secret layer.
       compatible = "zmk,behavior-mod-morph";
@@ -123,10 +117,10 @@
 //                 +-------+-------+-------+-------+-------+       +-------+-------+-------+-------+-------+
 
       bindings = <
-    &kp GRAVE &kp X     &kp V        &kp   L          &kp C             &kp W                                           &kp K   &kp H         &kp G        &kp F        &kp Q   &szet
-    &kp APOS  &kp U     &moht LWIN I &moht LALT A     &moht LCTRL E     &kp O                                           &kp S   &moht LCTRL N &moht LALT R &moht LWIN T &kp D   &kp Y
-    &kp SEMI  &kp RA(Y) &kp RA(P)    &kp   RA(Q)      &kp P             &kp Z                                           &kp B   &kp M         &kp COMMA    &kp PERIOD   &kp J   &kp SLASH
-                        &kp ESC      &lht L_NAV L_NAV &shla             &shnu            &lht L_FUN L_FUN       &kp TAB &kp RET &kp SPACE     &kp BSPC     &ltt L_DEF L_NUM
+    &kp GRAVE &kp X     &kp V        &kp   L          &kp C             &kp W                                       &kp K   &kp H         &kp G        &kp F        &kp Q   &szet
+    &kp APOS  &kp U     &moht LWIN I &moht LALT A     &moht LCTRL E     &kp O                                       &kp S   &moht LCTRL N &moht LALT R &moht LWIN T &kp D   &kp Y
+    &kp SEMI  &kp RA(Y) &kp RA(P)    &kp   RA(Q)      &kp P             &kp Z                                       &kp B   &kp M         &kp COMMA    &kp PERIOD   &kp J   &kp SLASH
+                        &kp ESC      &lht L_NAV L_NAV &sht LSHFT X      &shnu        &lht L_FUN L_FUN       &kp TAB &kp RET &kp SPACE     &kp BSPC     &ltt L_DEF L_NUM
         >;
     };
 
