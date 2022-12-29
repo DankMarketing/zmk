@@ -7,50 +7,50 @@
 // The dedicated shift key has got the following behaviour:
 // - if held down, it is the shift modifier
 // - if held down, but no other key is tapped, it reverts to the default layer (note that this requires the custom retro-tap patch of https://github.com/nickconway/zmk/tree/retro-tap-binding)
-// - if tapped once, it is a one-shot shift, i.e. applies shift only to the next key
+// - if tapped once, it is a one-shot shift, i.e. applies shift to the subsequent key
 // - if tapped twice, it is my flavour of caps word, i.e. it capitalizes the subsequent word (including the underscore)
 //
 // This is implemented as follows:
-// - first, there is a hold-tap with hold the LSHFT and tap the following sticky key with the custom retro-tap patch mapping an aborted hold to the layer reset
+// - first, there is a hold-tap with hold the LSHFT and tap the following sticky key; it has a custom retro-tap behaviour which resets the layer to default
 // - the sticky key produces a one-shot version of a macro that applies the following two modifiers
-// - the shift modifier (for the one-shot shift) and the momentarily applied special layer L_SHF (which does nothing other than modifying the behaviour of the shift key)
-// - on the special layer L_SHF the shift key is my flavour of caps-word - otherwise that layer is transparent
+// - the shift modifier (for the one-shot shift) and the momentarily applied special layer L_ONE_SHF (which does nothing other than modifying the behaviour of the shift key)
+// - on the special layer L_ONE_SHF the shift key is my flavour of caps-word - otherwise that layer is transparent
 
 / {
   macros {
-    mls: macro_layer_and_shift { // this macro applies the two modifiers when the shift key is tapped once
+    macro_shf: macro_layer_and_shift { // this macro applies the two modifiers when the shift key is tapped for the first time
       compatible = "zmk,behavior-macro";
       label = "MACRO_LAYER_AND_SHIFT";
       #binding-cells = <0>;
       wait-ms = <0>;
       tap-ms = <1>;
       bindings
-      = <&macro_press &mo L_SHF &kp LSHFT>
+      = <&macro_press   &mo L_ONE_SHF &kp LSHFT>
       , <&macro_pause_for_release>
-      , <&macro_release &mo L_SHF &kp LSHFT>
+      , <&macro_release &mo L_ONE_SHF &kp LSHFT>
       ;
     };
   };
 
   behaviors {
-    sls: sticky_layer_and_shift { // this is the sticky behaviour of the macro when the dedicated shift key is pressed once
+    sticky_shift: sticky_layer_and_shift { // this is the sticky behaviour of the macro when the dedicated shift key is pressed for the first time
       compatible = "zmk,behavior-sticky-key";
       label = "STICKY_LAYER_AND_SHIFT";
       #binding-cells = <1>;
       release-after-ms = <1000>;
-      bindings = <&mls>;
+      bindings = <&macro_shf>;
       ignore-modifiers;
     };
-    sht: shift_hold_tap { // this is the hold-tap for the dedicated shift key
+    hold_shift: hold_tap_shift { // this is the hold-tap for the dedicated shift key
       compatible = "zmk,behavior-hold-tap";
-      label = "SHIFT_HOLD_TAP";
+      label = "HOLD_TAP_SHIFT";
       #binding-cells = <2>;
       flavor = "balanced";
       retro-tap;
       retro-tap-behavior = "TO_LAYER"; // this requiree the custom retro-tap patch; note that the alternative behaviour is defined using control strings such as this
       retro-tap-param1 = <L_DEF>;
       tapping-term-ms = <200>;
-      bindings = <&kp>, <&sls>;
+      bindings = <&kp>, <&sticky_shift>;
     };
     mycaps: behavior_my_caps_word { // my version of Caps Word includes the underscore as a letter.
       compatible = "zmk,behavior-caps-word";
@@ -58,30 +58,180 @@
       #binding-cells = <0>;
       continue-list = <UNDER>;
     };
-    szet: szet_excl { // the [ß] key with [Shift] is the exclamation mark.
-      compatible = "zmk,behavior-mod-morph";
-      label = "SZET_EXCL";
+  };
+};
+
+// The layer switch keys under the left thumb have got the following behaviour:
+// - if held down, it is the momentary layer change; regardless of the initial layer, the layer is reset to default afterwards
+// - if held down, but no other key is tapped, it reverts to the default layer
+// - if tapped once, it is a one-shot layer change
+// - if tapped twice, it switches to that layer
+//
+// This is implemented as follows:
+// - first, there is a hold-tap with hold a macro and tap a sticky key with that macro
+// - the sticky key produces a one-shot version of that macro
+// - the macro first deactivates all layers except for the default, and then momentarily switches to the desired layer and also activates
+//   the special layer L_ONE_xxx that modifies the layer switch key in order to detect a second tap
+// - on the special layer L_ONE_xxx the layer switch key is modified accordingly; note that the key that is modified on that layer, switches to
+//   a layer that L_xxxP that is identical but has a different number - otherwise releasing the sticky key would reset the layer that we
+//   intend to switch to
+
+/ {
+  macros {
+    macro_nav: macro_layer_and_nav { // this macro applies the two momentary layers when the navigation layer key is tapped for the first time or held
+      compatible = "zmk,behavior-macro";
+      label = "MACRO_LAYER_AND_NAV";
       #binding-cells = <0>;
-      bindings = <&kp RA(S)>, <&kp N1>;
-      mods = <(MOD_LSFT|MOD_RSFT)>;
-      keep-mods = <(MOD_LSFT|MOD_RSFT)>;
+      wait-ms = <0>;
+      tap-ms = <1>;
+      bindings
+      = <&macro_press   &to L_DEF &mo L_NAV &mo L_ONE_NAV>
+      , <&macro_pause_for_release>
+      , <&macro_release &to L_DEF &mo L_NAV &mo L_ONE_NAV>
+      ;
+    };
+  };
+
+  behaviors {
+    sticky_nav: sticky_layer_and_nav { // this is the sticky behaviour of the macro when the navigation layer key is tapped for the first time or held
+      compatible = "zmk,behavior-sticky-key";
+      label = "STICKY_LAYER_AND_NAV";
+      #binding-cells = <1>;
+      release-after-ms = <1000>;
+      bindings = <&macro_nav>;
+      ignore-modifiers;
+    };
+    hold_nav: hold_tap_nav { // this is the hold-tap for the navigation layer key
+      compatible = "zmk,behavior-hold-tap";
+      label = "HOLD_TAP_NAV";
+      #binding-cells = <2>;
+      flavor = "balanced";
+      tapping-term-ms = <200>;
+      bindings = <&macro_nav>, <&sticky_nav>;
+    };
+  };
+};
+
+/ {
+  macros {
+    macro_num: macro_layer_and_num { // this macro applies the two momentary layers when the number layer key is tapped for the first time or held
+      compatible = "zmk,behavior-macro";
+      label = "MACRO_LAYER_AND_NUM";
+      #binding-cells = <0>;
+      wait-ms = <0>;
+      tap-ms = <1>;
+      bindings
+      = <&macro_press   &to L_DEF &mo L_NUM &mo L_ONE_NUM>
+      , <&macro_pause_for_release>
+      , <&macro_release &to L_DEF &mo L_NUM &mo L_ONE_NUM>
+      ;
+    };
+  };
+
+  behaviors {
+    sticky_num: sticky_layer_and_num { // this is the sticky behaviour of the macro when the number layer key is tapped for the first time or held
+      compatible = "zmk,behavior-sticky-key";
+      label = "STICKY_LAYER_AND_NUM";
+      #binding-cells = <1>;
+      release-after-ms = <1000>;
+      bindings = <&macro_num>;
+      ignore-modifiers;
+    };
+    hold_num: hold_tap_num { // this is the hold-tap for the number layer key
+      compatible = "zmk,behavior-hold-tap";
+      label = "HOLD_TAP_NUM";
+      #binding-cells = <2>;
+      flavor = "balanced";
+      tapping-term-ms = <200>;
+      bindings = <&macro_num>, <&sticky_num>;
     };
     shnu: shift_numbers { // the [L-1] number layer key with [Shift] switches to the secret layer.
       compatible = "zmk,behavior-mod-morph";
       label = "SHIFT_NUMBERS";
       #binding-cells = <0>;
-      bindings = <&lht L_NUM L_NUM>, <&mo L_BLE>;
+      bindings = <&hold_num A A>, <&mo L_BLE>;
       mods = <(MOD_LSFT|MOD_RSFT)>;
       keep-mods = <(MOD_LSFT|MOD_RSFT)>;
     };
-    lht: layer_hold_tap { // the layer switch keys on the left half are &to if tapped and &mo if held down.
-      compatible = "zmk,behavior-hold-tap";
-      label = "LAYER_HOLD_TAP";
-      #binding-cells = <2>;
-      tapping-term-ms = <200>;
-      bindings = <&mo>, <&to>;
+  };
+};
+
+/ {
+  macros {
+    macro_fun: macro_layer_and_fun { // this macro applies the two momentary layers when the function layer key is tapped for the first time or held
+      compatible = "zmk,behavior-macro";
+      label = "MACRO_LAYER_AND_FUN";
+      #binding-cells = <0>;
+      wait-ms = <0>;
+      tap-ms = <1>;
+      bindings
+      = <&macro_press   &to L_DEF &mo L_ONE_FUN &mo L_FUN>
+      , <&macro_pause_for_release>
+      , <&macro_release &to L_DEF &mo L_ONE_FUN &mo L_FUN>
+      ;
     };
-    ltt: layer_to_tap { // the layer switch key on the right half is &to if tapped and &to if held down.
+  };
+
+  behaviors {
+    sticky_fun: sticky_layer_and_fun { // this is the sticky behaviour of the macro when the functionn layer key is tapped for the first time or held
+      compatible = "zmk,behavior-sticky-key";
+      label = "STICKY_LAYER_AND_FUN";
+      #binding-cells = <1>;
+      release-after-ms = <1000>;
+      bindings = <&macro_fun>;
+      ignore-modifiers;
+    };
+    hold_fun: hold_tap_fun { // this is the hold-tap for the function layer key
+      compatible = "zmk,behavior-hold-tap";
+      label = "HOLD_TAP_FUN";
+      #binding-cells = <2>;
+      flavor = "balanced";
+      tapping-term-ms = <200>;
+      bindings = <&macro_fun>, <&sticky_fun>;
+    };
+  };
+};
+
+// the following behaviours are used in the keymap
+
+/ {
+  behaviors {
+    shbs: shift_backspace { // the backspace key with [Shift] is [Del]
+      compatible = "zmk,behavior-mod-morph";
+      label = "SHIFT_BACKSPACE";
+      #binding-cells = <0>;
+      bindings = <&htl L_NAV BSPC>, <&kp DEL>;
+      mods = <(MOD_LSFT|MOD_RSFT)>;
+    };
+    htl: hold_tap_right_layer { // the thumb keys on the right half have a layer switch function when held down
+      compatible = "zmk,behavior-hold-tap";
+      label = "HOLD_TAP_RIGHT_LAYER";
+      #binding-cells = <2>;
+      flavor = "tap-unless-interrupted";
+      tapping-term-ms = <400>;
+      retro-tap;
+      quick-tap-ms = <200>;
+      bindings = <&mo>, <&kp>;
+    };
+    hts: hold_tap_right_shift { // the central thumb key on the right half serves as shift when held down
+      compatible = "zmk,behavior-hold-tap";
+      label = "HOLD_TAP_RIGHT_SHIFT";
+      #binding-cells = <2>;
+      flavor = "tap-unless-interrupted";
+      tapping-term-ms = <400>;
+      retro-tap;
+      quick-tap-ms = <200>;
+      bindings = <&kp>, <&kp>;
+    };
+    ht: hold_tap_general { // the central thumb key on the right half serves as shift when held down
+      compatible = "zmk,behavior-hold-tap";
+      label = "HOLD_TAP_GENERAL";
+      #binding-cells = <2>;
+      flavor = "balanced";
+      tapping-term-ms = <200>;
+      bindings = <&kp>, <&kp>;
+    };
+    ltt: layer_to_tap { // the layer switch key on the right half is &to if tapped and &to if held down
       compatible = "zmk,behavior-hold-tap";
       label = "LAYER_TO_TAP";
       #binding-cells = <2>;
@@ -92,9 +242,10 @@
       compatible = "zmk,behavior-hold-tap";
       label = "MODIFIER_HOLD_TAP";
       #binding-cells = <2>;
-      flavor = "balanced";
+      flavor = "tap-unless-interrupted";
+      tapping-term-ms = <400>;
       retro-tap;
-      tapping-term-ms = <200>;
+      quick-tap-ms = <200>;
       bindings = <&kp>, <&kp>;
     };
   };
@@ -104,68 +255,123 @@
   keymap {
     compatible = "zmk,keymap";
 
-    default_layer {
+// +-------+-------+-------+-------+-------+-------+       +-------+-------+-------+-------+-------+-------+
+// |       |       |       |       |       |       |       |       |       |       |       |       |       |
+// +-------+-------+-------+-------+-------+-------+       +-------+-------+-------+-------+-------+-------+
+// |       |       |       |       |       |       |       |       |       |       |       |       |       |
+// +-------+-------+-------+-------+-------+-------+       +-------+-------+-------+-------+-------+-------+
+// |       |       |       |       |       |       |       |       |       |       |       |       |       |
+// +-------+-------+-------+-------+-------+-------+       +-------+-------+-------+-------+-------+-------+
+//         |       |       |       |       |       |       |       |       |       |       |       |
+//         +-------+-------+-------+-------+-------+       +-------+-------+-------+-------+-------+
 
-// +-------+-------+-------+-------+-------+-------+                       +-------+-------+-------+-------+-------+-------+
-// |       |       |       |       |       |       |                       |       |       |       |       |       |       |
-// +-------+-------+-------+-------+-------+-------+                       +-------+-------+-------+-------+-------+-------+
-// |       |       |       |       |       |       |                       |       |       |       |       |       |       |
-// +-------+-------+-------+-------+-------+-------+                       +-------+-------+-------+-------+-------+-------+
-// |       |       |       |       |       |       |                       |       |       |       |       |       |       |
-// +-------+-------+-------+-------+-------+-------+-------+       +-------+-------+-------+-------+-------+-------+-------+
-//                 |       |       |       |       |       |       |       |       |       |       |       |
-//                 +-------+-------+-------+-------+-------+       +-------+-------+-------+-------+-------+
+    default_layer { // #define L_DEF 0
+
 
       bindings = <
-    &kp GRAVE &kp X     &kp V        &kp   L          &kp C             &kp W                                       &kp K   &kp H         &kp G        &kp F        &kp Q   &szet
-    &kp APOS  &kp U     &moht LWIN I &moht LALT A     &moht LCTRL E     &kp O                                       &kp S   &moht LCTRL N &moht LALT R &moht LWIN T &kp D   &kp Y
-    &kp SEMI  &kp RA(Y) &kp RA(P)    &kp   RA(Q)      &kp P             &kp Z                                       &kp B   &kp M         &kp COMMA    &kp PERIOD   &kp J   &kp SLASH
-                        &kp ESC      &lht L_NAV L_NAV &sht LSHFT X      &shnu        &lht L_FUN L_FUN       &kp TAB &kp RET &kp SPACE     &kp BSPC     &ltt L_DEF L_NUM
+    &none  &kp X            &kp V            &kp   L             &kp C            &kp W          &kp K          &kp H          &kp G            &kp F           &kp Q            &none
+    &none  &kp U            &moht LWIN I     &moht LALT A        &moht LCTRL E    &kp O          &kp S          &moht LCTRL N  &moht LALT R     &moht LWIN T    &kp D            &none
+    &none  &kp RA(Y)        &kp RA(P)        &kp   RA(Q)         &kp P            &kp Z          &kp B          &kp M          &kp J            &kp Y           &kp RA(S)        &none
+           &kp ESC          &hold_nav A A    &hold_shift LSHFT A &shnu            &hold_fun A A  &kp TAB        &htl L_NUM RET &hts LSHFT SPACE &shbs           &ltt L_DEF L_NUM
         >;
     };
 
-    numbers_layer {
+    navigation_layer { // #define L_NAV 1
       bindings = <
-    &kp RA(N9)       &kp RA(LS(S)) &kp RA(N5)      &kp LBRC        &kp RBRC         &kp PIPE                     &kp SLASH &kp N7         &kp N8        &kp N9        &kp MINUS  &kp CARET
-    &kp UNDER        &kp LBKT      &moht LWIN RBKT &moht LALT LPAR &moht LCTRL RPAR &kp BSLH                     &kp ASTRK &moht LCTRL N4 &moht LALT N5 &moht LWIN N6 &kp PLUS   &kp APOS
-    &kp RA(LS(SEMI)) &kp AT        &kp HASH        &kp DLLR        &kp PRCNT        &kp AMPS                     &kp EQUAL &kp N1         &kp N2        &kp N3        &kp PERIOD &kp COMMA
-                                   &trans          &trans          &trans           &trans   &trans &trans       &trans    &kp N0         &trans        &ltt L_DEF L_NAV
+    &none  &kp CARET        &kp GRAVE        &kp LS(COMMA)       &kp LS(DOT)      &kp EXCL       &mkp LCLK      &kp HOME       &kp UP           &kp PG_UP       &kp LC(R)        &none
+    &none  &kp DQT          &moht LWIN APOS  &moht LALT COMMA    &moht LCTRL DOT  &kp QMARK      &mkp MCLK      &kp LEFT       &kp SLCK         &kp RIGHT       &kp LA(LS(N5))   &none
+    &none  &kp RA(LS(SEMI)) &kp RA(N9)       &kp SEMI            &kp COLON        &kp UNDER      &mkp RCLK      &kp END        &kp DOWN         &kp PG_DN       &kp LC(S)        &none
+           &trans           &trans           &trans              &trans           &trans         &trans         &trans         &trans           &trans          &ltt L_DEF L_FUN
       >;
     };
 
-    navigation_layer {
+    navigation_layer_p { // #define L_NAVP 2 (identical, but different number)
       bindings = <
-    &trans &trans &trans &trans &trans &trans                          &mkp LCLK &kp HOME  &kp UP   &kp PG_UP &kp LA(LS(COMMA))  &kp LC(R)
-    &trans &trans &trans &trans &trans &trans                          &mkp MCLK &kp LEFT  &kp SLCK &kp RIGHT &kp LC(L)          &kp LA(LS(N5))
-    &trans &trans &trans &trans &trans &trans                          &mkp RCLK &kp END   &kp DOWN &kp PG_DN &kp LA(LS(PERIOD)) &kp LC(S)
-                  &trans &trans &trans &trans  &trans          &trans  &trans    &kp SPACE &trans   &ltt L_DEF L_FUN
+    &none  &kp CARET        &kp GRAVE        &kp LS(COMMA)       &kp LS(DOT)      &kp EXCL       &mkp LCLK      &kp HOME       &kp UP           &kp PG_UP       &kp LC(R)        &none
+    &none  &kp DQT          &moht LWIN APOS  &moht LALT COMMA    &moht LCTRL DOT  &kp QMARK      &mkp MCLK      &kp LEFT       &kp SLCK         &kp RIGHT       &kp LA(LS(N5))   &none
+    &none  &kp RA(LS(SEMI)) &kp RA(N9)       &kp SEMI            &kp COLON        &kp UNDER      &mkp RCLK      &kp END        &kp DOWN         &kp PG_DN       &kp LC(S)        &none
+           &trans           &trans           &trans              &trans           &trans         &trans         &trans         &trans           &trans          &ltt L_DEF L_FUN
       >;
     };
 
-    functions_layer {
+    numbers_layer { // #define L_NUM 3
       bindings = <
-    &trans &trans &trans &trans &trans &trans                          &kp K_VOL_UP &kp F7  &kp F8  &kp F9  &kp F10 &kp C_BRI_UP
-    &trans &trans &trans &trans &trans &trans                          &kp K_MUTE   &kp F4  &kp F5  &kp F6  &kp F11 &kp C_BRI_AUTO
-    &trans &trans &trans &trans &trans &trans                          &kp K_VOL_DN &kp F1  &kp F2  &kp F3  &kp F12 &kp C_BRI_DN
-                  &trans &trans &trans &trans  &trans          &trans  &trans       &trans  &trans  &ltt L_DEF L_DEF
+    &none  &kp TILDE        &kp RA(N5)      &kp LBRC            &kp RBRC         &kp PIPE        &ht APOS MINUS &kp N7         &kp N8           &kp N9          &kp EQUAL        &none
+    &none  &kp LBKT         &moht LWIN RBKT &moht LALT LPAR     &moht LCTRL RPAR &kp BSLH        &kp PLUS       &moht LCTRL N4 &moht LALT N5    &moht LWIN N6   &ht COMMA DOT    &none
+    &none  &kp AT           &kp HASH        &kp DLLR            &kp PRCNT        &kp AMPS        &ht CARET STAR &kp N1         &kp N2           &kp N3          &kp SLASH        &none
+           &trans           &trans          &trans              &trans           &trans          &trans         &trans         &hts SPACE N0    &trans          &ltt L_DEF L_NAV
       >;
     };
 
-    secret_layer {
+    numbers_layer_p { // #define L_NUMP 4 (identical, but different number)
       bindings = <
-    &trans &trans &trans &trans &trans &trans                          &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4 &bt BT_SEL 5 &out OUT_BLE
-    &trans &trans &trans &trans &trans &trans                          &trans       &bt BT_PRV   &bt BT_CLR   &bt BT_NXT   &trans       &out OUT_USB
-    &trans &trans &trans &trans &trans &trans                          &trans       &trans       &trans       &trans       &trans       &out OUT_TOG
-                  &trans &trans &trans &trans  &trans          &trans  &trans       &trans       &trans       &trans
+    &none  &kp TILDE        &kp RA(N5)      &kp LBRC            &kp RBRC         &kp PIPE        &ht APOS MINUS &kp N7         &kp N8           &kp N9          &kp EQUAL        &none
+    &none  &kp LBKT         &moht LWIN RBKT &moht LALT LPAR     &moht LCTRL RPAR &kp BSLH        &kp PLUS       &moht LCTRL N4 &moht LALT N5    &moht LWIN N6   &ht COMMA DOT    &none
+    &none  &kp AT           &kp HASH        &kp DLLR            &kp PRCNT        &kp AMPS        &ht CARET STAR &kp N1         &kp N2           &kp N3          &kp SLASH        &none
+           &trans           &trans          &trans              &trans           &trans          &trans         &trans         &hts SPACE N0    &trans          &ltt L_DEF L_NAV
       >;
     };
 
-    shift_layer {
+    functions_layer { // #define L_FUN 5
       bindings = <
-    &trans &trans &trans &trans &trans &trans                          &trans       &trans       &trans       &trans       &trans       &trans
-    &trans &trans &trans &trans &trans &trans                          &trans       &trans       &trans       &trans       &trans       &trans
-    &trans &trans &trans &trans &trans &trans                          &trans       &trans       &trans       &trans       &trans       &trans
-                  &trans &trans &mycaps &trans  &trans          &trans  &trans       &trans       &trans       &trans
+    &none  &none            &none           &none               &none            &kp C_BRI_UP    &kp K_VOL_UP   &kp F7         &kp F8           &kp F9          &kp F10          &none
+    &none  &none            &moht LWIN LALT &moht LALT LALT     &moht LSHFT LALT &kp C_BRI_AUTO  &kp K_MUTE     &kp F4         &kp F5           &kp F6          &kp F11          &none
+    &none  &none            &none           &none               &none            &kp C_BRI_DN    &kp K_VOL_DN   &kp F1         &kp F2           &kp F3          &kp F12          &none
+           &trans           &trans          &trans              &trans           &trans          &trans         &trans         &hts LSHFT SPACE &trans          &ltt L_DEF L_DEF
+      >;
+    };
+
+    functions_layer_p { // #define L_FUNP 6 (identical, but different number)
+      bindings = <
+    &none  &none            &none           &none               &none            &kp C_BRI_UP    &kp K_VOL_UP   &kp F7         &kp F8           &kp F9          &kp F10          &none
+    &none  &none            &moht LWIN LALT &moht LALT LALT     &moht LSHFT LALT &kp C_BRI_AUTO  &kp K_MUTE     &kp F4         &kp F5           &kp F6          &kp F11          &none
+    &none  &none            &none           &none               &none            &kp C_BRI_DN    &kp K_VOL_DN   &kp F1         &kp F2           &kp F3          &kp F12          &none
+           &trans           &trans          &trans              &trans           &trans          &trans         &trans         &hts LSHFT SPACE &trans          &ltt L_DEF L_DEF
+      >;
+    };
+
+    secret_layer { // #define L_BLE 7
+      bindings = <
+    &trans &trans           &trans          &trans              &trans           &trans          &bt BT_SEL 1   &bt BT_SEL 2   &bt BT_SEL 3     &bt BT_SEL 4    &bt BT_SEL 5     &none
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &bt BT_PRV     &bt BT_CLR       &bt BT_NXT      &trans           &none
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &out OUT_BLE   &out OUT_USB     &out OUT_TOG    &trans           &none
+           &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans
+      >;
+    };
+
+    one_shift_layer { // #define L_ONE_SHF 8
+      bindings = <
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+           &trans           &trans          &mycaps             &trans           &trans          &trans         &trans         &trans           &trans          &trans
+      >;
+    };
+
+    one_nav_layer { // #define L_ONE_NAV 9
+      bindings = <
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+           &trans           &to L_NAVP      &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans
+      >;
+    };
+
+    one_num_layer { // #define L_ONE_NUM 10
+      bindings = <
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+           &trans           &trans          &trans              &to L_NUMP       &trans          &trans         &trans         &trans           &trans          &trans
+      >;
+    };
+
+    one_fun_layer { // #define L_ONE_FUN 11
+      bindings = <
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+    &trans &trans           &trans          &trans              &trans           &trans          &trans         &trans         &trans           &trans          &trans           &trans
+           &trans           &trans          &trans              &trans           &to L_FUNP      &trans         &trans         &trans           &trans          &trans
       >;
     };
   };
