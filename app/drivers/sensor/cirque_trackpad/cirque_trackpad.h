@@ -1,6 +1,6 @@
 #pragma once
 
-#include <device.h>
+#include <zephyr/device.h>
 #include <drivers/spi.h>
 #include <drivers/i2c.h>
 
